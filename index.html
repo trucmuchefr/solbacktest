@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SolBacktest</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navigation latérale">
+        <a class="brand-mark" href="#/" aria-label="SolBacktest">
+          <img src="assets/solana-official-mark.svg" alt="" />
+        </a>
+        <nav class="side-nav">
+          <a href="#/" title="Vue d’ensemble">
+            <img src="assets/icon-overview.svg" alt="" />
+          </a>
+          <a href="#/create" title="Créer un bundle">
+            <span class="plus-icon" aria-hidden="true">+</span>
+          </a>
+        </nav>
+        <button id="refreshButton" class="round-button" type="button" title="Actualiser">
+          <img src="assets/icon-refresh.svg" alt="" />
+        </button>
+      </aside>
+
+      <div class="main-shell">
+        <header class="topbar">
+          <a class="brand" href="#/">
+            <img src="assets/solana-official-logo.svg" alt="Solana" />
+            <span>Backtest</span>
+          </a>
+          <nav class="top-nav" aria-label="Navigation principale">
+            <a href="#/">Accueil</a>
+            <a href="#/">Overview</a>
+            <a href="#/create">Requests</a>
+          </nav>
+          <span id="storageMode" class="storage-pill"></span>
+        </header>
+
+        <main id="app" class="page" aria-live="polite"></main>
+      </div>
+    </div>
+
+    <template id="overviewTemplate">
+      <section class="page-heading">
+        <p class="kicker">Solana Copy-Trade Backtester</p>
+        <div class="heading-row">
+          <div>
+            <h1>Wallet Bundle Overview</h1>
+            <p>Vue d’ensemble des bundles, de l’état local et des résultats disponibles.</p>
+          </div>
+          <a class="primary-button" href="#/create">
+            <span aria-hidden="true">+</span>
+            Add New Wallet Bundle
+          </a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <h2>Bundles créés</h2>
+          <span id="bundleCount" class="counter">0</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Bundle Name</th>
+                <th>Created Date</th>
+                <th>Wallets</th>
+                <th>Calculation Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bundleRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="stat-strip">
+        <article>
+          <span>Requests In Queue</span>
+          <strong id="queueCount">0</strong>
+        </article>
+        <article>
+          <span>Running on Local PC</span>
+          <strong id="runningCount">0</strong>
+        </article>
+        <article>
+          <span>Completed</span>
+          <strong id="completedCount">0</strong>
+        </article>
+      </section>
+    </template>
+
+    <template id="createTemplate">
+      <section class="page-heading">
+        <p class="kicker">Step 1</p>
+        <h1>Configure Your Wallet Bundle</h1>
+        <p>Ajoute un nom, puis une adresse Solana par ligne.</p>
+      </section>
+
+      <section class="panel form-panel">
+        <form id="bundleForm">
+          <label class="field">
+            <span>Bundle Name</span>
+            <input id="bundleName" type="text" placeholder="ex. Whale Alpha List 2" required />
+          </label>
+
+          <div class="field">
+            <span>Wallets List <small>(max 20 adresses)</small></span>
+            <div id="walletRows" class="wallet-rows"></div>
+            <button id="addWalletButton" class="add-line-button" type="button">＋ Ajouter une ligne wallet</button>
+          </div>
+
+          <div class="form-actions">
+            <a class="ghost-button" href="#/">Annuler</a>
+            <button class="primary-button wide" type="submit">Submit and Launch Deferred Analysis</button>
+          </div>
+          <p id="formMessage" class="form-message" role="status"></p>
+        </form>
+      </section>
+    </template>
+
+    <template id="resultsTemplate">
+      <section class="page-heading">
+        <p class="kicker" id="resultBreadcrumb">Overview › Results</p>
+        <h1 id="resultTitle">Analysis Results</h1>
+        <p id="resultSubtitle"></p>
+      </section>
+
+      <section class="chart-row-layout">
+        <article class="panel chart-panel">
+          <div class="panel-heading">
+            <h2>Balance Evolution Over Time</h2>
+            <span>30 Days Simulation</span>
+          </div>
+          <div id="balanceChart" class="chart-stage"></div>
+        </article>
+      </section>
+
+      <section class="results-bottom-grid">
+        <article class="panel strategy-panel">
+          <div class="panel-heading">
+            <h2>Strategy Performance Recap</h2>
+            <span>Comparative Analysis</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Strategy Name</th>
+                  <th>Total PnL</th>
+                  <th>Total Nb Trades</th>
+                  <th>Win Rate</th>
+                  <th>ROI</th>
+                  <th>Avg. PnL / Trade</th>
+                  <th>Max Drawdown</th>
+                </tr>
+              </thead>
+              <tbody id="strategyRows"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <aside id="bestStrategy" class="best-card"></aside>
+      </section>
+    </template>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
