@@ -1,5 +1,5 @@
 window.APP_CONFIG = {
   SUPABASE_URL: "https://wyestxrnjriudqbzdfet.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5ZXN0eHJuanJpdWRxYnpkZmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMDMxMDIsImV4cCI6MjA5Mzc3OTEwMn0.8lzlf4j5ComHxIv2B5A8oRyfVbnpWtcQ_UqZ4cDydys",
-  ALLOW_SIGNUPS: false
+  ALLOW_SIGNUPS: true
 };

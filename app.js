@@ -148,7 +148,7 @@ function renderLogin() {
   const message = document.querySelector("#authMessage");
 
   demoButton.hidden = Boolean(supabaseClient);
-  signUpButton.hidden = !supabaseClient || !allowSignUps;
+  signUpButton.hidden = !supabaseClient;
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -157,6 +157,11 @@ function renderLogin() {
 
   if (!signUpButton.hidden) {
     signUpButton.addEventListener("click", async () => {
+      if (!allowSignUps) {
+        message.textContent =
+          "Création de compte désactivée. Mets ALLOW_SIGNUPS à true dans config.js ou crée le compte dans Supabase.";
+        return;
+      }
       await signUp(message);
     });
   }
