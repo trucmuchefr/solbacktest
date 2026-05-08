@@ -106,6 +106,11 @@ function renderRoute() {
     return;
   }
 
+  if (hash.startsWith("#/signup")) {
+    renderSignup();
+    return;
+  }
+
   if (hash.startsWith("#/login") || !canAccessPrivatePages()) {
     renderLogin();
     return;
@@ -143,34 +148,45 @@ function renderChrome(hash = window.location.hash || "#/") {
 function renderLogin() {
   app.replaceChildren(template("loginTemplate"));
   const form = document.querySelector("#loginForm");
-  const signUpButton = document.querySelector("#signUpButton");
+  const signUpLink = document.querySelector("#signUpLink");
   const demoButton = document.querySelector("#demoLoginButton");
   const message = document.querySelector("#authMessage");
 
   demoButton.hidden = Boolean(supabaseClient);
-  signUpButton.hidden = !supabaseClient;
+  signUpLink.hidden = !supabaseClient;
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     await signIn(message);
   });
 
-  if (!signUpButton.hidden) {
-    signUpButton.addEventListener("click", async () => {
-      if (!allowSignUps) {
-        message.textContent =
-          "Création de compte désactivée. Mets ALLOW_SIGNUPS à true dans config.js ou crée le compte dans Supabase.";
-        return;
-      }
-      await signUp(message);
-    });
-  }
-
   demoButton.addEventListener("click", async () => {
     sessionStorage.setItem("solbacktestDemoAuth", "1");
     state.user = { email: "Mode démo" };
     window.location.hash = "#/";
     await loadAnalyses();
+  });
+}
+
+function renderSignup() {
+  if (!supabaseClient) {
+    window.location.hash = "#/login";
+    return;
+  }
+
+  app.replaceChildren(template("signupTemplate"));
+  const form = document.querySelector("#signupForm");
+  const message = document.querySelector("#signupMessage");
+
+  if (!allowSignUps) {
+    message.textContent =
+      "Création de compte désactivée. Demande à l’administrateur de créer ton compte dans Supabase.";
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!allowSignUps) return;
+    await signUp(message);
   });
 }
 
@@ -186,8 +202,20 @@ async function signIn(message) {
 
 async function signUp(message) {
   if (!supabaseClient) return;
-  const email = document.querySelector("#loginEmail").value.trim();
-  const password = document.querySelector("#loginPassword").value;
+  const email = document.querySelector("#signupEmail").value.trim();
+  const password = document.querySelector("#signupPassword").value;
+  const passwordConfirm = document.querySelector("#signupPasswordConfirm").value;
+
+  if (password.length < 6) {
+    message.textContent = "Le mot de passe doit faire au moins 6 caractères.";
+    return;
+  }
+
+  if (password !== passwordConfirm) {
+    message.textContent = "Les mots de passe ne correspondent pas.";
+    return;
+  }
+
   message.textContent = "Création du compte...";
 
   const { data, error } = await supabaseClient.auth.signUp({ email, password });
@@ -200,6 +228,10 @@ async function signUp(message) {
   message.textContent = data.session
     ? "Compte créé."
     : "Compte créé. Confirme l’email si Supabase te l’envoie.";
+
+  if (data.session) {
+    window.location.hash = "#/";
+  }
 }
 
 async function signOut() {
