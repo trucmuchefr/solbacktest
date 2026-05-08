@@ -9,23 +9,6 @@
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar" aria-label="Navigation latérale">
-        <a class="brand-mark" href="#/" aria-label="SolBacktest">
-          <img src="assets/solana-official-mark.svg" alt="" />
-        </a>
-        <nav class="side-nav">
-          <a href="#/" title="Vue d’ensemble">
-            <img src="assets/icon-overview.svg" alt="" />
-          </a>
-          <a href="#/create" title="Créer un bundle">
-            <span class="plus-icon" aria-hidden="true">+</span>
-          </a>
-        </nav>
-        <button id="refreshButton" class="round-button" type="button" title="Actualiser">
-          <img src="assets/icon-refresh.svg" alt="" />
-        </button>
-      </aside>
-
       <div class="main-shell">
         <header class="topbar">
           <a class="brand" href="#/">
@@ -38,6 +21,9 @@
             <a href="#/create">Requests</a>
           </nav>
           <span id="storageMode" class="storage-pill"></span>
+          <button id="refreshButton" class="round-button" type="button" title="Actualiser">
+            <img src="assets/icon-refresh.svg" alt="" />
+          </button>
         </header>
 
         <main id="app" class="page" aria-live="polite"></main>

@@ -9,16 +9,23 @@ create table if not exists analyses (
 
 alter table analyses enable row level security;
 
+grant usage on schema public to anon, authenticated;
+grant select, insert on table public.analyses to anon, authenticated;
+grant select, insert, update on table public.analyses to service_role;
+
+drop policy if exists "Anyone can create an analysis" on analyses;
+drop policy if exists "Anyone can read analyses" on analyses;
+
 create policy "Anyone can create an analysis"
-on analyses
+on public.analyses
 for insert
-to anon
+to anon, authenticated
 with check (true);
 
 create policy "Anyone can read analyses"
-on analyses
+on public.analyses
 for select
-to anon
+to anon, authenticated
 using (true);
 
 create index if not exists analyses_status_created_at_idx
