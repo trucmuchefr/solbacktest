@@ -218,7 +218,13 @@ async function signUp(message) {
 
   message.textContent = "Création du compte...";
 
-  const { data, error } = await supabaseClient.auth.signUp({ email, password });
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${window.location.origin}${window.location.pathname}`
+    }
+  });
 
   if (error) {
     message.textContent = error.message;

@@ -62,6 +62,9 @@ Dans Supabase :
 2. Active `Email`.
 3. Pour un prototype avec un ami, tu peux désactiver temporairement `Confirm email` afin que le compte soit utilisable tout de suite.
 4. Crée les comptes autorisés depuis `Authentication > Users`.
+5. Va dans `Authentication > URL Configuration`.
+6. Mets `Site URL` sur l’URL publique du site, par exemple `https://ton-site.netlify.app`.
+7. Ajoute aussi cette URL dans `Redirect URLs`.
 
 Le SQL ajoute `user_id` sur chaque analyse. Un utilisateur connecté ne peut lire que ses propres bundles.
 
