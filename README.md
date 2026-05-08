@@ -52,6 +52,21 @@ Si `config.js` est vide, le site démarre en mode démo local avec trois bundles
 
 La clé `anon` peut être utilisée dans le navigateur si Row Level Security est activé. La clé `service_role` ne doit jamais être mise dans le front, car elle contourne les règles RLS.
 
+## Activer la connexion
+
+L’app utilise Supabase Auth avec email + mot de passe.
+
+Dans Supabase :
+
+1. Va dans `Authentication > Providers`.
+2. Active `Email`.
+3. Pour un prototype avec un ami, tu peux désactiver temporairement `Confirm email` afin que le compte soit utilisable tout de suite.
+4. Crée les comptes autorisés depuis `Authentication > Users`.
+
+Le SQL ajoute `user_id` sur chaque analyse. Un utilisateur connecté ne peut lire que ses propres bundles.
+
+Par défaut, l’inscription publique est désactivée côté front avec `ALLOW_SIGNUPS: false` dans `config.js`. Si tu veux afficher le bouton `Créer un compte` sur la page de connexion, passe cette valeur à `true`.
+
 ## Configurer le front
 
 Dans `config.js`, mets :
@@ -59,7 +74,8 @@ Dans `config.js`, mets :
 ```js
 window.APP_CONFIG = {
   SUPABASE_URL: "https://TON_PROJET.supabase.co",
-  SUPABASE_ANON_KEY: "TA_CLE_ANON_PUBLIC"
+  SUPABASE_ANON_KEY: "TA_CLE_ANON_PUBLIC",
+  ALLOW_SIGNUPS: false
 };
 ```
 

@@ -8,6 +8,7 @@ const STATUSES = {
 const STRATEGY_COLORS = ["#38d49b", "#a77dff", "#27f4f2", "#ff6b6b", "#ffd166"];
 const config = window.APP_CONFIG || {};
 const isConfigured = Boolean(config.SUPABASE_URL && config.SUPABASE_ANON_KEY);
+const allowSignUps = Boolean(config.ALLOW_SIGNUPS);
 const supabaseClient =
   isConfigured && window.supabase
     ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
@@ -16,21 +17,66 @@ const supabaseClient =
 const state = {
   analyses: [],
   bundleName: "",
-  walletInputs: ["", "", ""]
+  walletInputs: ["", "", ""],
+  user: null,
+  authReady: false
 };
 
 const app = document.querySelector("#app");
 const storageMode = document.querySelector("#storageMode");
 const refreshButton = document.querySelector("#refreshButton");
+const signOutButton = document.querySelector("#signOutButton");
+const navBundles = document.querySelector("#navBundles");
+const navCreate = document.querySelector("#navCreate");
 
-storageMode.textContent = isConfigured ? "Supabase connecté" : "Mode démo local";
 refreshButton.addEventListener("click", loadAnalyses);
+signOutButton.addEventListener("click", signOut);
 window.addEventListener("hashchange", renderRoute);
 
-loadAnalyses();
-setInterval(loadAnalyses, 10000);
+initAuth();
+setInterval(() => {
+  if (canAccessPrivatePages() && !isCreateRoute()) {
+    loadAnalyses();
+  }
+}, 10000);
+
+async function initAuth() {
+  if (!supabaseClient) {
+    state.user = sessionStorage.getItem("solbacktestDemoAuth") ? { email: "Mode démo" } : null;
+    state.authReady = true;
+    renderRoute();
+    return;
+  }
+
+  const { data } = await supabaseClient.auth.getSession();
+  state.user = data.session?.user || null;
+  state.authReady = true;
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    state.user = session?.user || null;
+    state.analyses = [];
+    if (state.user) {
+      if ((window.location.hash || "#/") === "#/login") window.location.hash = "#/";
+      loadAnalyses();
+    } else {
+      window.location.hash = "#/login";
+      renderRoute();
+    }
+  });
+
+  if (state.user) {
+    await loadAnalyses();
+  } else {
+    renderRoute();
+  }
+}
 
 async function loadAnalyses() {
+  if (!canAccessPrivatePages()) {
+    renderRoute();
+    return;
+  }
+
   try {
     if (supabaseClient) {
       const { data, error } = await supabaseClient
@@ -53,6 +99,17 @@ async function loadAnalyses() {
 
 function renderRoute() {
   const hash = window.location.hash || "#/";
+  renderChrome(hash);
+
+  if (!state.authReady) {
+    app.innerHTML = `<section class="panel empty-state">Chargement...</section>`;
+    return;
+  }
+
+  if (hash.startsWith("#/login") || !canAccessPrivatePages()) {
+    renderLogin();
+    return;
+  }
 
   if (hash.startsWith("#/create")) {
     renderCreate();
@@ -65,6 +122,91 @@ function renderRoute() {
   }
 
   renderOverview();
+}
+
+function renderChrome(hash = window.location.hash || "#/") {
+  const isLoggedIn = canAccessPrivatePages();
+  storageMode.textContent = isConfigured
+    ? state.user?.email || "Connexion requise"
+    : isLoggedIn
+      ? "Mode démo local"
+      : "Mode démo verrouillé";
+  refreshButton.hidden = !isLoggedIn;
+  signOutButton.hidden = !isLoggedIn;
+  navBundles.classList.toggle(
+    "is-active",
+    isLoggedIn && (hash === "#/" || hash === "" || hash.startsWith("#/results/"))
+  );
+  navCreate.classList.toggle("is-active", isLoggedIn && hash.startsWith("#/create"));
+}
+
+function renderLogin() {
+  app.replaceChildren(template("loginTemplate"));
+  const form = document.querySelector("#loginForm");
+  const signUpButton = document.querySelector("#signUpButton");
+  const demoButton = document.querySelector("#demoLoginButton");
+  const message = document.querySelector("#authMessage");
+
+  demoButton.hidden = Boolean(supabaseClient);
+  signUpButton.hidden = !supabaseClient || !allowSignUps;
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await signIn(message);
+  });
+
+  if (!signUpButton.hidden) {
+    signUpButton.addEventListener("click", async () => {
+      await signUp(message);
+    });
+  }
+
+  demoButton.addEventListener("click", async () => {
+    sessionStorage.setItem("solbacktestDemoAuth", "1");
+    state.user = { email: "Mode démo" };
+    window.location.hash = "#/";
+    await loadAnalyses();
+  });
+}
+
+async function signIn(message) {
+  if (!supabaseClient) return;
+  const email = document.querySelector("#loginEmail").value.trim();
+  const password = document.querySelector("#loginPassword").value;
+  message.textContent = "Connexion...";
+
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  message.textContent = error ? error.message : "";
+}
+
+async function signUp(message) {
+  if (!supabaseClient) return;
+  const email = document.querySelector("#loginEmail").value.trim();
+  const password = document.querySelector("#loginPassword").value;
+  message.textContent = "Création du compte...";
+
+  const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+  if (error) {
+    message.textContent = error.message;
+    return;
+  }
+
+  message.textContent = data.session
+    ? "Compte créé."
+    : "Compte créé. Confirme l’email si Supabase te l’envoie.";
+}
+
+async function signOut() {
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
+  } else {
+    sessionStorage.removeItem("solbacktestDemoAuth");
+    state.user = null;
+    state.analyses = [];
+    window.location.hash = "#/login";
+    renderRoute();
+  }
 }
 
 function renderOverview() {
@@ -182,7 +324,8 @@ async function submitBundle() {
   const analysis = {
     name,
     wallets,
-    status: "pending"
+    status: "pending",
+    ...(supabaseClient ? { user_id: state.user.id } : {})
   };
 
   try {
@@ -358,6 +501,10 @@ function countStatus(status) {
 
 function isCreateRoute() {
   return (window.location.hash || "#/").startsWith("#/create");
+}
+
+function canAccessPrivatePages() {
+  return Boolean(state.user);
 }
 
 function getDemoAnalyses() {
